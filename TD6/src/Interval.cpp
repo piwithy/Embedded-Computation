@@ -16,6 +16,8 @@ Interval::Interval(double inf, double sup) : inf(inf), sup(sup) {}
 
 Interval::Interval(double d) : inf(d), sup(d) {}
 
+Interval &Interval::operator=(const Interval &i) = default;
+
 
 double Interval::getInf() const {
     return inf;
@@ -170,41 +172,6 @@ Interval::Interval(Interval &&i) noexcept: inf(i.inf), sup(i.sup) {
     i.sup = NAN;
 }
 
+Union::Union(Interval &x, Interval &y) : Interval(x | y) {}
 
-Inter::Inter(Interval &x, Interval &y) {
-    if (x.isInsideOf(y)) {            // [ Y [ X ] Y ]
-        sup = x.getSup();
-        inf = x.getInf();
-    } else if (y.isInsideOf(x)) {         // [ X [ Y ] X ]
-        sup = y.getSup();
-        inf = y.getInf();
-    } else if (y.getInf() >= x.getInf() && y.getSup() >= x.getSup()) {  // [ X [ ] Y ]
-        inf = y.getInf();
-        sup = x.getSup();
-    } else if (y.getInf() <= x.getInf() && y.getSup() <= x.getSup()) {   // [ Y [ ] X ]
-        inf = x.getInf();
-        sup = y.getSup();
-    } else {                                // [ X ] [ Y ] OR [ Y ] [ X ]
-        sup = NAN;
-        inf = NAN;
-    }
-}
-
-Union::Union(Interval &x, Interval &y) {
-    if (x.isInsideOf(y)) {            // [ Y [ X ] Y ]
-        sup = y.getSup();
-        inf = y.getInf();
-    } else if (y.isInsideOf(x)) {         // [ X [ Y ] X ]
-        sup = x.getSup();
-        inf = x.getInf();
-    } else if (y.getInf() >= x.getInf() && y.getSup() >= x.getSup()) {  // [ X [ ] Y ]
-        inf = x.getInf();
-        sup = y.getSup();
-    } else if (y.getInf() <= x.getInf() && y.getSup() <= x.getSup()) {   // [ Y [ ] X ]
-        inf = y.getInf();
-        sup = x.getSup();
-    } else {                                // [ X ] [ Y ] OR [ Y ] [ X ]
-        sup = NAN;
-        inf = NAN;
-    }
-}
+Inter::Inter(Interval &x, Interval &y) : Interval(x & y) {}

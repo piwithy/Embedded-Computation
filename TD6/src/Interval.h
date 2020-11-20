@@ -20,6 +20,8 @@ public:
 
     Interval(const Interval &) = default; // copy constructor
 
+    Interval &operator=(const Interval &i);
+
     ~Interval(); // destructor
 
     Interval(double, double);
@@ -78,12 +80,12 @@ public:
 
 class Inter : public Interval {
 public:
-    Inter(Interval &i, Interval &j);
+    Inter(Interval &x, Interval &y);
 };
 
 class Union : public Interval {
 public:
-    Union(Interval &i, Interval &j);
+    Union(Interval &x, Interval &y);
 };
 
 #endif
