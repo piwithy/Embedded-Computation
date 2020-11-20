@@ -1,22 +1,89 @@
 #ifndef INTERVAL_H
 #define INTERVAL_H
 
+#ifndef OSTREAM_LIB
+#define OSTREAM_LIB
+
+#include <ostream>
+
+#endif
+
 class Interval {
-private:
-    double inf;
-    double sup;
+protected:
+    double inf{};
+    double sup{};
 
 public:
-    Interval();
+    Interval(); //Default constructor
+
+    Interval(Interval &&) noexcept; // move constructor
+
+    Interval(const Interval &) = default; // copy constructor
+
+    ~Interval(); // destructor
 
     Interval(double, double);
 
-    Interval(double);
+    explicit Interval(double);
 
-    double getInf() const;
+    [[nodiscard]] double getInf() const;
 
-    double getSup() const;
+    [[nodiscard]] double getSup() const;
 
+    [[nodiscard]] double width() const;
+
+    [[nodiscard]] bool isEmpty() const;
+
+    [[nodiscard]] bool isDegenerated() const;
+
+    [[nodiscard]] bool isNan() const;
+
+    friend std::ostream &operator<<(std::ostream &, const Interval &);
+
+    friend bool operator==(const Interval &x, const Interval &y);
+
+    friend Interval operator+(const Interval &x, const double &y);
+
+    friend Interval operator+(const double &x, const Interval &y);
+
+    Interval operator+(const Interval &y) const;
+
+    friend Interval operator-(const Interval &x, const double &y);
+
+    friend Interval operator-(const double &x, const Interval &y);
+
+    Interval operator-(const Interval &y) const;
+
+    Interval operator-() const;
+
+    friend Interval operator*(const Interval &x, const double &y);
+
+    friend Interval operator*(const double &x, const Interval &y);
+
+    Interval operator*(const Interval &y) const;
+
+    friend Interval operator/(const Interval &x, const double &y);
+
+    friend Interval operator/(const double &x, const Interval &y);
+
+    Interval operator/(const Interval &y) const;
+
+    Interval operator&(const Interval &y) const;
+
+    Interval operator|(const Interval &y) const;
+
+    [[nodiscard]] bool isInsideOf(const Interval &y) const;
+
+};
+
+class Inter : public Interval {
+public:
+    Inter(Interval &i, Interval &j);
+};
+
+class Union : public Interval {
+public:
+    Union(Interval &i, Interval &j);
 };
 
 #endif
