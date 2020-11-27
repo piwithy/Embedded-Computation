@@ -20,8 +20,6 @@ public:
 
     Interval(const Interval &) = default; // copy constructor
 
-    Interval &operator=(const Interval &i);
-
     ~Interval(); // destructor
 
     Interval(double, double);

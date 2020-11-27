@@ -1,0 +1,3 @@
+// the configured options and settings for Tutorial
+#define SIGNAL_PROCESSING_VERSION_MAJOR @signal_processing_VERSION_MAJOR@
+#define SIGNAL_PROCESSING_VERSION_MINOR @signal_processing_VERSION_MINOR@

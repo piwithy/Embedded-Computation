@@ -16,8 +16,10 @@ Interval::Interval(double inf, double sup) : inf(inf), sup(sup) {}
 
 Interval::Interval(double d) : inf(d), sup(d) {}
 
-Interval &Interval::operator=(const Interval &i) = default;
-
+Interval::Interval(Interval &&i) noexcept: inf(i.inf), sup(i.sup) {
+    i.inf = NAN;
+    i.sup = NAN;
+}
 
 double Interval::getInf() const {
     return inf;
@@ -165,11 +167,6 @@ Interval Interval::operator|(const Interval &y) const {
 
 bool Interval::isInsideOf(const Interval &y) const {
     return ((inf >= y.inf) && (sup <= y.sup));
-}
-
-Interval::Interval(Interval &&i) noexcept: inf(i.inf), sup(i.sup) {
-    i.inf = NAN;
-    i.sup = NAN;
 }
 
 Union::Union(Interval &x, Interval &y) : Interval(x | y) {}

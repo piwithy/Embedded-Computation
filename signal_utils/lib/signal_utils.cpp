@@ -1,4 +1,9 @@
-#include "common.h"
+//
+// Created by jezegoup on 23/11/2020.
+//
+
+#include "signal_utils.h"
+
 #include <numbers>
 
 std::vector<double> makeTimeVector(double Fs, std::size_t size) {

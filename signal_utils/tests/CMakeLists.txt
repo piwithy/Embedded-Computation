@@ -1,0 +1,1 @@
+add_executable(TEST $<TARGET_OBJECTS:signal_utils> main.cpp test.cpp)
