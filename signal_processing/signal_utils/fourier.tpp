@@ -50,7 +50,12 @@ std::vector<Complex> recursive_fft(const std::vector<T> &X) {
                  [n = 0](T x) mutable { return n++ % 2 == 0; });
     std::copy_if(std::execution::par, X.cbegin(), X.cend(), odd.begin(),
                  [n = 0](T x) mutable { return n++ % 2 != 0; });
+    auto odd_comp = recursive_fft(odd);
+    auto even_comp = recursive_fft(even);
 
+    for(auto k=0; k<(x_size/2) - 1; k++){
+
+    }
 
     return v;
 }

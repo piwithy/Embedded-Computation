@@ -1,1 +1,1 @@
-add_library(signal_utils signal_utils.cpp fourier.cpp)
+add_library(signal_utils signal_utils.cpp fourier.cpp fft.cpp)
