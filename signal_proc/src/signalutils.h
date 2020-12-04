@@ -1,9 +1,16 @@
+#ifndef SIGNAL_UTILS_H
+#define SIGNAL_UTILS_H
 
+#include "global.h"
+#include <numbers>
 #include <iostream>
 #include <iterator>
-#include <numbers>
+#include <vector>
+#include <array>
 #include <random>
-#include <tuple>
+#include <chrono>
+#include <execution>
+#include <type_traits>
 
 template<typename T>
 std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
@@ -13,6 +20,28 @@ std::ostream &operator<<(std::ostream &s, const std::vector<T> &v) {
         s << v.back();
     }
     return s << ']';
+}
+
+std::vector<double> makeTimeVector(double Fs, std::size_t size) {
+    std::vector<double> time(size);
+    double step = 1 / Fs;
+    double t = -step;
+    std::generate(time.begin(), time.end(), [&]() mutable -> double {
+        t = t + step;
+        return t;
+    });
+    return time;
+}
+
+std::vector<double> makeFrequencyVector(double Fs, std::size_t size) {
+    std::vector<double> freq(size);
+    double step = Fs / size;
+    double f = -step;
+    std::generate(freq.begin(), freq.end(), [&]() mutable -> double {
+        f = f + step;
+        return f;
+    });
+    return freq;
 }
 
 template<typename T>
@@ -34,8 +63,23 @@ std::vector<T> makeAMSinusVector(const std::vector<double> &time, double fp, dou
     return sinus;
 }
 
+
+std::vector<double> psd(const std::vector<Complex> &dft) {
+    std::vector<double> p(dft.size());
+    for (std::size_t k = 0; k < p.size(); k++)
+        p[k] = (dft[k] * std::conj(dft[k])).real();
+    return p;
+}
+
+
+std::vector<double> toReal(const std::vector<Complex> &x) {
+    std::vector<double> r(x.size());
+    std::transform(x.begin(), x.end(), r.begin(), [](Complex c) { return c.real(); });
+    return r;
+}
+
 template<typename Tcontainer, typename Tsignal>
-std::vector<Tcontainer> generate_random_vector(Tsignal inf, Tsignal sup, std::size_t size) {
+const std::vector<Tcontainer> generate_random_vector(Tsignal inf, Tsignal sup, std::size_t size) {
     std::vector<Tcontainer> v(size);
     std::random_device seeder;
     std::mt19937 random_generator(seeder()); //Standard mersenne_twister_engine seeded with rd()
@@ -50,28 +94,43 @@ std::vector<Tcontainer> generate_random_vector(Tsignal inf, Tsignal sup, std::si
     return v;
 }
 
-template<typename F,
+
+template<typename Duration = std::chrono::microseconds,
+        typename F,
         typename ... Args>
-Duration::rep wall_time_profile(F &&fun, Args &&... args) {
+typename Duration::rep wall_time_profile(F &&fun, Args &&... args) {
     const auto beg = std::chrono::high_resolution_clock::now();
     std::forward<F>(fun)(std::forward<Args>(args)...);
     const auto end = std::chrono::high_resolution_clock::now();
     return std::chrono::duration_cast<Duration>(end - beg).count();
 }
 
-template<typename F,
+template<typename Duration = std::chrono::microseconds,
+        typename F,
         typename ... Args>
-Duration::rep cpu_time_profile(F &&fun, Args &&... args) {
-    struct timespec begin{}, end{};
+typename Duration::rep cpu_time_profile(F &&fun, Args &&... args) {
+    struct timespec begin, end;
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &begin);
     std::forward<F>(fun)(std::forward<Args>(args)...);
     clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &end);
     return end.tv_nsec - begin.tv_nsec;
 }
 
-template<typename F,
+std::pair<typename std::chrono::milliseconds::rep, typename std::chrono::milliseconds::rep>
+average_stddev(const std::vector<typename std::chrono::milliseconds::rep> &data) {
+    double mean = std::reduce(data.cbegin(), data.cend(), 0.0) / data.size();
+    double sqSum = 0.0;
+    std::for_each(data.cbegin(), data.cend(),
+                  [&](const typename std::chrono::milliseconds::rep d) {
+                      sqSum += (d - mean) * (d - mean);
+                  });
+    return std::make_pair(mean, std::sqrt(sqSum / (data.size() - 1)));
+}
+
+template<typename Duration = std::chrono::microseconds,
+        typename F,
         typename ... Args>
-Duration::rep wall_time_average_profile(std::size_t nRuns, F &&fun, Args &&... args) {
+typename Duration::rep wall_time_average_profile(std::size_t nRuns, F &&fun, Args &&... args) {
     std::vector<typename std::chrono::microseconds::rep> samples(nRuns);
     for (auto &sample : samples) {
         const auto beg = std::chrono::high_resolution_clock::now();
@@ -80,8 +139,7 @@ Duration::rep wall_time_average_profile(std::size_t nRuns, F &&fun, Args &&... a
         sample = std::chrono::duration_cast<Duration>(end - beg).count();
     }
     auto[mean, stddev] = average_stddev(samples);
-    std::cout << nRuns << " runs: average = " << (double) mean << " µs, stdev = " << stddev << " µs."
-              << std::endl;
+    std::cout << nRuns << " runs: average = " << mean << " µs, stdev = " << stddev << " µs." << std::endl;
     return mean;
 }
 
@@ -96,8 +154,9 @@ std::ostream &operator<<(std::ostream &s, const std::array<T, SIZE> &a) {
     return s << ']';
 }
 
+
 template<typename T>
-std::tuple<bool, int, double> epsilon_vector_compare(const std::string &title, std::vector<T> x, std::vector<T> y) {
+std::tuple<bool, int, double> epsilon_vector_compare(std::string title, std::vector<T> x, std::vector<T> y) {
 
     if (x.size() != y.size())
         throw std::invalid_argument("Size's vectors must be equal !");
@@ -123,7 +182,7 @@ std::tuple<bool, int, double> epsilon_vector_compare(const std::string &title, s
 
 template<typename F,
         typename ... Args>
-void peakDetection(const std::string &title, double Fs, std::vector<Complex> &signal, F &&fun, Args &&... args) {
+void peakDetection(std::string title, double Fs, std::vector<Complex> &signal, F &&fun, Args &&... args) {
     std::forward<F>(fun)(std::forward<Args>(args)...);
     auto freq = makeFrequencyVector(Fs, N);
     auto periodogram = psd(signal);
@@ -139,4 +198,14 @@ void peakDetection(const std::string &title, double Fs, std::vector<Complex> &si
               << std::endl;
 }
 
+void windowing(const std::array<double, N> &w, std::vector<Complex> &s) {
+    std::transform(s.begin(),
+                   s.end(),
+                   s.begin(),
+                   [&, index = -1](Complex c)mutable {
+                       index++;
+                       return w[index] * c;
+                   });
+}
 
+#endif

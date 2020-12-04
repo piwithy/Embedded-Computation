@@ -9,7 +9,7 @@
 #include <chrono>
 
 typedef std::complex<double> Complex;
-constexpr size_t N = 2048;
+constexpr size_t N = 512;
 typedef std::chrono::microseconds Duration;
 
 #endif //SIGNAL_PROCESSING_COMMON_H
