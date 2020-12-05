@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <numbers>
+#include <array>
 #include "common.h"
 
 void v_rect_dit_fft(std::vector<Complex> &x) {
@@ -63,8 +64,25 @@ void v_rect_dit_fft_array(Complex *x, std::size_t x_size) {
 
 }
 
-void ite_dit_fft_array(Complex *x, std::size_t x_size){
+void ite_dit_fft_array(Complex *x, std::size_t x_size, std::array<std::size_t, N> scrambling_lut) {
+    auto stages = std::log2(x_size);
+    //scramble
+    std::size_t scrambled_idx;
+    Complex inter;
+    for (auto idx = 0; idx < x_size; idx++) {
+        scrambled_idx = scrambling_lut[idx];
+        inter = x[scrambled_idx];
+        x[scrambled_idx] = x[idx];
+        x[idx] = inter;
+    }
 
+
+    int currentSize;
+
+    for (auto stage = 0; stage < stages; stage++) {
+        currentSize = (int) (1u << (unsigned) stage);
+
+    }
 }
 
 #endif //SIGNAL_PROCESSING_FFT_H

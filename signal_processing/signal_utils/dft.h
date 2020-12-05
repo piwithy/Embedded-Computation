@@ -2,8 +2,8 @@
 // Created by jezegoup on 23/11/2020.
 //
 
-#ifndef SIGNAL_PROCESSING_FOURIER_H
-#define SIGNAL_PROCESSING_FOURIER_H
+#ifndef SIGNAL_PROCESSING_DFT_H
+#define SIGNAL_PROCESSING_DFT_H
 
 #ifndef SIGNAL_PROCESSING_COMMON_H
 
@@ -31,7 +31,7 @@ template<typename T>
 std::vector<Complex> recursive_fft(const std::vector<T> &X);
 
 
-#include "fourier.tpp"
+#include "dft.tpp"
 
 
-#endif //SIGNAL_PROCESSING_FOURIER_H
+#endif //SIGNAL_PROCESSING_DFT_H

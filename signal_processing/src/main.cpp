@@ -4,7 +4,7 @@
 #include <iostream>
 #include "src/SignalProcessingConfig.h"
 #include "signal_utils.h"
-#include "fourier.h"
+#include "dft.h"
 #include "fft.h"
 
 void test_dft() {
@@ -71,10 +71,8 @@ void test_fft() {
 int main() {
     std::cout << "Version " << SIGNAL_PROCESSING_VERSION_MAJOR << "."
               << SIGNAL_PROCESSING_VERSION_MINOR << std::endl;
-    std::cout << "Testing DFT!" << std::endl;
-    /*auto w = make_lut<N>();
-    std::cout << w << std::endl;*/
-    test_dft();
+    //std::cout << "Testing DFT!" << std::endl;
+    //test_dft();
     std::cout << "Testing FFT!" << std::endl;
     test_fft();
     return 0;
