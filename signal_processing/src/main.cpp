@@ -47,7 +47,8 @@ void test_fft() {
     auto time = makeTimeVector(Fs, N);
     auto dft_sinus = makeSinusVector<Complex>(time, f);
     //auto X = dft(dft_sinus);
-    v_rect_dit_fft_array(dft_sinus.data(), dft_sinus.size());
+    auto scrambling_lut = bit_reverse_array();
+    ite_dit_fft_array(dft_sinus.data(), dft_sinus.size(), scrambling_lut);
 //std::cout << X << std::endl;
     auto periodogram = psd(dft_sinus);
     auto max_elem = std::max_element(periodogram.cbegin(), periodogram.cend() - N / 2);

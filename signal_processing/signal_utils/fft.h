@@ -8,6 +8,7 @@
 #include <vector>
 #include <numbers>
 #include <array>
+#include <iostream>
 #include "common.h"
 
 void v_rect_dit_fft(std::vector<Complex> &x) {
@@ -64,25 +65,45 @@ void v_rect_dit_fft_array(Complex *x, std::size_t x_size) {
 
 }
 
-void ite_dit_fft_array(Complex *x, std::size_t x_size, std::array<std::size_t, N> scrambling_lut) {
-    auto stages = std::log2(x_size);
-    //scramble
-    std::size_t scrambled_idx;
-    Complex inter;
-    for (auto idx = 0; idx < x_size; idx++) {
-        scrambled_idx = scrambling_lut[idx];
-        inter = x[scrambled_idx];
-        x[scrambled_idx] = x[idx];
-        x[idx] = inter;
+void scramble(Complex *x, size_t size, std::array<std::size_t, N> cifer) {
+    Complex x_scram[size];
+    for (size_t idx; idx < size; idx++) {
+        x_scram[cifer[idx]] = x[idx];
     }
+    for (size_t idx; idx < size; idx++) {
+        x[idx] = x_scram[idx];
+    }
+}
 
 
-    int currentSize;
+void ite_dit_fft_array(Complex *x, std::size_t problem_size, std::array<std::size_t, N> scrambling_lut) {
+    using namespace std::complex_literals;
+    int stages = std::log2(problem_size);
+
+    //scramble
+    scramble(x, problem_size, scrambling_lut);
+
+    Complex u, v;
+    unsigned current_size, half_size;
 
     for (auto stage = 0; stage < stages; stage++) {
-        currentSize = (int) (1u << (unsigned) stage);
-
+        current_size = std::pow(2, stage);
+        half_size = current_size / 2;
+        std::cout << "stage=" << stage << " stages=" << stages << std::endl;
+        std::cout << "current_size=" << current_size << "; half_size=" << half_size << std::endl;
+        for (auto k = 0; k < current_size; k++) {
+            for (auto j = 0; j < half_size; j++) {
+                //std::cout << "looking at:(" << k + j << ", " << k + j + half_size << "); x_size=" << problem_size
+                //          << std::endl;
+                u = x[k + j];
+                v = x[k + j + half_size] *
+                    std::exp(-2. * j * std::numbers::pi * ((double) (j) / half_size));
+                x[k + j] = u + v;
+                x[k + j + half_size] = u - v;
+            }
+        }
     }
+
 }
 
 #endif //SIGNAL_PROCESSING_FFT_H
