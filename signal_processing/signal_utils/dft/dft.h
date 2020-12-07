@@ -7,7 +7,7 @@
 
 #ifndef SIGNAL_PROCESSING_COMMON_H
 
-#include "common.h"
+#include "../common.h"
 
 #endif
 
