@@ -83,36 +83,30 @@ constexpr std::array<Complex, N / 2> twiddle_factors() {
     return t;
 }
 
-void ite_dit_fft_array(Complex *x, std::size_t problem_size) {
-    using namespace std::complex_literals;
-    int stages = std::log2(problem_size);
-
-    //scramble
-    constexpr auto scrambled = bit_reverse_array();
-    for (auto i = 0; i < problem_size; i++) {
-        auto j = scrambled[i];
-        if (i < j)
+void ite_dit_fft(std::vector<Complex> &x) {
+    std::size_t problemSize = x.size();
+    std::size_t stages = std::log2(problemSize);
+    auto tf = twiddle_factors();
+    constexpr std::array<std::size_t, N> scrambled = bit_reverse_array();
+    for (std::size_t i = 0; i < x.size(); i++) {
+        std::size_t j = scrambled[i];
+        if (i < j) {
             swap(x[i], x[j]);
+        }
     }
-
-    Complex u, v;
-    unsigned current_size, half_size;
-
-    for (auto stage = 0; stage <= stages; stage++) {
-        current_size = std::pow(2, stage);
+    for (std::size_t stage = 0; stage <= stages; stage++) {
+        std::size_t currentSize = 1 << stage;
         std::size_t step = stages - stage;
-        half_size = current_size / 2;
-        auto tf = twiddle_factors();
-        for (auto k = 0; k < problem_size; k += current_size) {
-            for (auto j = 0; j < half_size; j++) {
-                u = x[k + j];
-                v = x[k + j + half_size] * tf[j * (1 << step)];
-                x[k + j] = u + v;
-                x[k + j + half_size] = u - v;
+        std::size_t halfSize = currentSize / 2;
+        for (std::size_t k = 0; k < problemSize; k = k + currentSize) {
+            for (std::size_t j = 0; j < halfSize; j++) {
+                auto u = x[k + j];
+                auto v = x[k + j + halfSize] * tf[j * (1 << step)];
+                x[k + j] = (u + v);
+                x[k + j + halfSize] = (u - v);
             }
         }
     }
-
 }
 
 #endif //SIGNAL_PROCESSING_FFT_H

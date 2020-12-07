@@ -48,7 +48,7 @@ void test_fft() {
     auto dft_sinus = makeSinusVector<Complex>(time, f);
     auto dft_sinus_bis = makeSinusVector<Complex>(time, f);
     //auto X = dft(dft_sinus);
-    ite_dit_fft_array(dft_sinus.data(), dft_sinus.size());
+    ite_dit_fft(dft_sinus);
     v_rect_dit_fft_array(dft_sinus_bis.data(), dft_sinus.size());
     epsilon_vector_compare("Recusive vs Iterative", dft_sinus, dft_sinus_bis);
     //std::cout << X << std::endl;
@@ -69,7 +69,7 @@ void test_fft() {
     std::cout << "ARRAY FFT ----- ";
     wall_time_average_profile(100, v_rect_dit_fft_array, data.data(), data.size());
     std::cout << "Iter ARRAY FFT ----- ";
-    wall_time_average_profile(100, ite_dit_fft_array, data.data(), data.size());
+    wall_time_average_profile(100, ite_dit_fft, data);
 }
 
 
