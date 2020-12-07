@@ -46,10 +46,12 @@ void test_fft() {
     double Fs = 22050.;
     auto time = makeTimeVector(Fs, N);
     auto dft_sinus = makeSinusVector<Complex>(time, f);
+    auto dft_sinus_bis = makeSinusVector<Complex>(time, f);
     //auto X = dft(dft_sinus);
-    auto scrambling_lut = bit_reverse_array();
-    ite_dit_fft_array(dft_sinus.data(), dft_sinus.size(), scrambling_lut);
-//std::cout << X << std::endl;
+    ite_dit_fft_array(dft_sinus.data(), dft_sinus.size());
+    v_rect_dit_fft_array(dft_sinus_bis.data(), dft_sinus.size());
+    epsilon_vector_compare("Recusive vs Iterative", dft_sinus, dft_sinus_bis);
+    //std::cout << X << std::endl;
     auto periodogram = psd(dft_sinus);
     auto max_elem = std::max_element(periodogram.cbegin(), periodogram.cend() - N / 2);
     auto max_index = std::distance(periodogram.cbegin(), max_elem);
@@ -66,6 +68,8 @@ void test_fft() {
     wall_time_average_profile(100, v_rect_dit_fft, data);
     std::cout << "ARRAY FFT ----- ";
     wall_time_average_profile(100, v_rect_dit_fft_array, data.data(), data.size());
+    std::cout << "Iter ARRAY FFT ----- ";
+    wall_time_average_profile(100, ite_dit_fft_array, data.data(), data.size());
 }
 
 

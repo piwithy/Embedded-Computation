@@ -109,10 +109,10 @@ std::tuple<bool, int, double> epsilon_vector_compare(const std::string &title, s
     int count = 0;
     double max_delta = 0.0;
     for (std::size_t k = 0; k < x.size(); k++) {
-        if (abs(x[k]) - abs(y[k]) > std::numeric_limits<double>::epsilon())
+        if (abs(abs(x[k]) - abs(y[k])) > std::numeric_limits<double>::epsilon())
             count++;
-        if (abs(x[k] - y[k]) > max_delta)
-            max_delta = abs(x[k] - y[k]);
+        if (abs(x[k]) - abs(y[k]) > max_delta)
+            max_delta = abs(abs(x[k]) - abs(y[k]));
     }
     std::cout << std::boolalpha << title
               << " are same ? --> " << same

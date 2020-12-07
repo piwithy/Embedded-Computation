@@ -67,37 +67,46 @@ void v_rect_dit_fft_array(Complex *x, std::size_t x_size) {
 
 void scramble(Complex *x, size_t size, std::array<std::size_t, N> cifer) {
     Complex x_scram[size];
-    for (size_t idx; idx < size; idx++) {
+    for (size_t idx = 0; idx < size; idx++) {
         x_scram[cifer[idx]] = x[idx];
     }
-    for (size_t idx; idx < size; idx++) {
+    for (size_t idx = 0; idx < size; idx++) {
         x[idx] = x_scram[idx];
     }
 }
 
 
-void ite_dit_fft_array(Complex *x, std::size_t problem_size, std::array<std::size_t, N> scrambling_lut) {
+constexpr std::array<Complex, N / 2> twiddle_factors() {
+    std::array<Complex, N / 2> t;
+    for (std::size_t k = 0; k < N / 2; k++)
+        t[k] = std::exp(Complex(0, -2 * std::numbers::pi * k / N));
+    return t;
+}
+
+void ite_dit_fft_array(Complex *x, std::size_t problem_size) {
     using namespace std::complex_literals;
     int stages = std::log2(problem_size);
 
     //scramble
-    scramble(x, problem_size, scrambling_lut);
+    constexpr auto scrambled = bit_reverse_array();
+    for (auto i = 0; i < problem_size; i++) {
+        auto j = scrambled[i];
+        if (i < j)
+            swap(x[i], x[j]);
+    }
 
     Complex u, v;
     unsigned current_size, half_size;
 
-    for (auto stage = 0; stage < stages; stage++) {
+    for (auto stage = 0; stage <= stages; stage++) {
         current_size = std::pow(2, stage);
+        std::size_t step = stages - stage;
         half_size = current_size / 2;
-        std::cout << "stage=" << stage << " stages=" << stages << std::endl;
-        std::cout << "current_size=" << current_size << "; half_size=" << half_size << std::endl;
-        for (auto k = 0; k < current_size; k++) {
+        auto tf = twiddle_factors();
+        for (auto k = 0; k < problem_size; k += current_size) {
             for (auto j = 0; j < half_size; j++) {
-                //std::cout << "looking at:(" << k + j << ", " << k + j + half_size << "); x_size=" << problem_size
-                //          << std::endl;
                 u = x[k + j];
-                v = x[k + j + half_size] *
-                    std::exp(-2. * j * std::numbers::pi * ((double) (j) / half_size));
+                v = x[k + j + half_size] * tf[j * (1 << step)];
                 x[k + j] = u + v;
                 x[k + j + half_size] = u - v;
             }
