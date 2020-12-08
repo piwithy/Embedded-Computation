@@ -55,4 +55,4 @@ export CXX="<path_to_G++-10>" # usualy: "/usr/bin/g++-10"
 </table>
 
 # LICENCE
-[MIT LICENCE](./LICENCE.md)
+[MIT LICENCE](./LICENSE.md)
