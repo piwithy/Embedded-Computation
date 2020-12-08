@@ -1,1 +1,0 @@
-add_executable(TD7 main.cpp common.cpp)
