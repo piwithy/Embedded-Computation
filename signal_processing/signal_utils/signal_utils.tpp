@@ -117,8 +117,8 @@ std::tuple<bool, int, double> epsilon_vector_compare(const std::string &title, s
     std::cout << std::boolalpha << title
               << " are same ? --> " << same
               << "\t distinct = " << count
-              << "\t accuracy = " << ((double) (x.size() - count) / x.size()) * 100 << "%"
-              << "\t max delta = " << max_delta << std::endl;
+              << "\t accuracy = " << std::round((((double) (x.size() - count) / x.size()) * 100000) / 1000) <<"%"
+            << "\t max delta = " << max_delta << std::endl;
     return std::make_tuple(same, count, max_delta);
 }
 

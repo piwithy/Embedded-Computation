@@ -1,1 +1,0 @@
-add_library(signal_utils signal_utils.cpp signal_utils.h)
