@@ -6,6 +6,7 @@
 #include "signal_utils.h"
 #include "dft/dft.h"
 #include "fft/fft.h"
+#include "audio_reading/audio_read.h"
 
 void test_dft() {
     /*double f= 889.0;
@@ -120,13 +121,18 @@ void test_fft() {
     epsilon_vector_compare("DIF ITER Vector, Array", sin_vector_dif_fft_iter, sin_vector_dif_fft_iter_arr);
 }
 
+void audio_test() {
+    auto disco = readAuFile("../../assets/disco.00050.au");
+}
+
 
 int main() {
     std::cout << "Version " << SIGNAL_PROCESSING_VERSION_MAJOR << "."
               << SIGNAL_PROCESSING_VERSION_MINOR << std::endl;
     /*std::cout << "Testing DFT!" << std::endl;
     test_dft();*/
-    std::cout << "Testing FFT!" << std::endl;
-    test_fft();
+    //std::cout << "Testing FFT!" << std::endl;
+    //test_fft();
+    audio_test();
     return 0;
 }
