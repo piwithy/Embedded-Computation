@@ -6,7 +6,7 @@
 #include "signal_utils.h"
 #include "dft/dft.h"
 #include "fft/fft.h"
-#include "audio_reading/audio_read.h"
+#include "read_audio.h"
 
 void test_dft() {
     /*double f= 889.0;
