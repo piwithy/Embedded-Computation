@@ -21,14 +21,13 @@ uint32_t read_word(std::ifstream &file, bool bigEndian) {
 }
 
 std::ostream &operator<<(std::ostream &s, const auHeader *h) {
-    return s << std::hex
-             << "AU Header:\n"
-             << "\tMagic Number\t=0x" << h->magic_number << "\n"
-             << "\tData Offset\t=0x" << h->data_offset << "\n"
-             << "\tData size\t=0x" << h->data_size << "\n"
-             << "\tEncoding\t=0x" << h->encoding << "\n"
-             << "\tSample Rate\t=0x" << h->sample_rate << "\n"
-             << "\tChannels\t=0x" << h->channels
+    return s << "AU Header:\n"
+             << std::hex << "\tMagic Number\t= 0x" << h->magic_number << "\n"
+             << std::dec << "\tData Offset\t= " << h->data_offset << "\n"
+             << std::dec << "\tData size\t= " << (double) (h->data_size) / MIB << " MiB\n"
+             << std::dec << "\tEncoding\t= " << h->encoding << "\n"
+             << std::dec << "\tSample Rate\t= " << h->sample_rate << " sample/s \n"
+             << std::dec << "\tChannels\t= " << h->channels
              << std::dec;
 }
 
@@ -43,6 +42,7 @@ std::vector<float> readAuFile(const std::string &fileName) {
     uint8_t b;
     header->magic_number = read_word(myFile);
     header->data_offset = read_word(myFile);
+    header->data_size = read_word(myFile);
     header->encoding = read_word(myFile);
     header->sample_rate = read_word(myFile);
     header->channels = read_word(myFile);

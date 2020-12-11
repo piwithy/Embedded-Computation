@@ -40,6 +40,8 @@
 #include <string>
 #include <vector>
 
+#define MIB 1048576
+
 typedef struct au_head {
     uint32_t magic_number;
     uint32_t data_offset;
