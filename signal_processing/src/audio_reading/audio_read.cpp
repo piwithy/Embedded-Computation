@@ -33,22 +33,31 @@ std::ostream &operator<<(std::ostream &s, const auHeader *h) {
 
 
 std::vector<float> readAuFile(const std::string &fileName) {
-    FILE *fin = fopen(fileName.c_str(), "rb");
     std::ifstream myFile(fileName);
     std::vector<float> data;
     std::unique_ptr<auHeader> header = std::make_unique<auHeader>();
 
-    uint32_t word = 0;
-    uint8_t b;
     header->magic_number = read_word(myFile);
     header->data_offset = read_word(myFile);
     header->data_size = read_word(myFile);
     header->encoding = read_word(myFile);
     header->sample_rate = read_word(myFile);
     header->channels = read_word(myFile);
-
     std::cout << std::hex << header << std::endl;
 
+    myFile.seekg(header->data_offset, std::ios_base::beg);
+    std::cout << "data read start" << std::endl;
+    for (size_t data_ind = 0; data_ind < header->data_size; data_ind++) {
+        uint16_t word = 0;
+        uint8_t b;
+        myFile.read(reinterpret_cast<char *>(&b), sizeof(uint8_t));
+        word = word | (b << 8);
+        myFile.read(reinterpret_cast<char *>(&b), sizeof(uint8_t));
+        word = word | (b << 0);
+        data.push_back((float) word);
+    }
+    std::cout << "data read end" << std::endl;
+    myFile.close();
     return data;
 
 }
