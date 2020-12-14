@@ -10,6 +10,7 @@
 #define GIB 1073741824
 
 #include <string>
+#include <array>
 #include <vector>
 
 
@@ -45,6 +46,7 @@ public:
 
 private:
     bool verbose, big_endianness;
+    std::vector<std::array<float, 512>> bins;
     std::vector<float> data;
     uint64_t magic_number;
     uint64_t data_offset;

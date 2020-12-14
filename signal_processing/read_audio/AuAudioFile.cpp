@@ -186,8 +186,8 @@ void AuAudioFile::read_data(std::ifstream &file, bool bigEndian) {
             throw BadEncodingException(stringStream.str());
     }
     file.seekg(data_offset, std::ios_base::beg);
-    for (size_t data_idx = 0; data_idx < data_size; data_idx++) {
-        data.push_back((float) read_word(file, word_size, bigEndian));
+    for (size_t data_idx = 0; data_idx < data_size / word_size; data_idx++) {
+        data.push_back((float) ((short) read_word(file, word_size, bigEndian)));
     }
     data.shrink_to_fit();
     if (this->verbose)
