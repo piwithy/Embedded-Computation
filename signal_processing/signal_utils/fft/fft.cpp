@@ -62,13 +62,9 @@ void ite_dit_fft(std::vector<Complex> &x) {
     std::size_t problemSize = x.size();
     std::size_t stages = std::log2(problemSize);
     auto tf = twiddle_factors<N>();
-    constexpr std::array<std::size_t, N> scrambled = bit_reverse_array<N>();
-    for (std::size_t i = 0; i < x.size(); i++) {
-        std::size_t j = scrambled[i];
-        if (i < j) {
-            swap(x[i], x[j]);
-        }
-    }
+
+    bit_reverse_reorder(x);
+
     for (std::size_t stage = 0; stage <= stages; stage++) {
         std::size_t currentSize = 1 << stage;
         std::size_t step = stages - stage;
@@ -88,13 +84,9 @@ void ite_dit_fft_array(Complex *x, std::size_t x_size) {
     std::size_t problemSize = x_size;
     std::size_t stages = std::log2(problemSize);
     auto tf = twiddle_factors<N>();
-    constexpr std::array<std::size_t, N> scrambled = bit_reverse_array<N>();
-    for (std::size_t i = 0; i < x_size; i++) {
-        std::size_t j = scrambled[i];
-        if (i < j) {
-            swap(x[i], x[j]);
-        }
-    }
+
+    bit_reverse_reorder(x, x_size);
+
     for (std::size_t stage = 0; stage <= stages; stage++) {
         std::size_t currentSize = 1 << stage;
         std::size_t step = stages - stage;
@@ -176,57 +168,66 @@ void v_rect_dif_fft_array(Complex *x, std::size_t x_size) {
 }
 
 void ite_dif_fft(std::vector<Complex> &x) {
-    std::size_t problemSize = x.size();
-    std::size_t stages = std::log2(problemSize);
-    auto tf = twiddle_factors<N>();
+    auto w = twiddle_factors<N>();
+    std::size_t problemSize = x.size(), numOfProblem = 1;
 
-    for (std::size_t stage = 0; stage <= stages; stage++) {
-        std::size_t currentSize = 1 << stage;
-        std::size_t step = stages - stage;
-        std::size_t halfSize = currentSize / 2;
-        for (std::size_t k = 0; k < problemSize; k = k + currentSize) {
-            for (std::size_t j = 0; j < halfSize; j++) {
-                auto u = x[k + j];
-                auto v = x[k + j + halfSize];
-                x[k + j] = (u + v);
-                x[k + j + halfSize] = (u - v) * tf[j * (1 << step)];
+    while (problemSize > 1) {
+        std::size_t halfSize = problemSize / 2;
+        for (std::size_t k = 0; k < numOfProblem; k++) {
+            std::size_t jFirst = k * problemSize, jLast = jFirst + halfSize - 1, jTwiddle = 0;
+            for (std::size_t j = jFirst; j <= jLast; j++) {
+                auto W = w[jTwiddle];
+                auto temp = x[j];
+                x[j] = temp + x[j + halfSize];
+                x[j + halfSize] = W * (temp - x[j + halfSize]);
+                jTwiddle += numOfProblem;
             }
         }
+        numOfProblem *= 2;
+        problemSize = halfSize;
     }
+    bit_reverse_reorder(x);
+}
 
+void ite_dif_fft_array(Complex *x, size_t x_size) {
+    auto w = twiddle_factors<N>();
+    std::size_t problemSize = x_size, numOfProblem = 1;
+
+    while (problemSize > 1) {
+        std::size_t halfSize = problemSize / 2;
+        for (std::size_t k = 0; k < numOfProblem; k++) {
+            std::size_t jFirst = k * problemSize, jLast = jFirst + halfSize - 1, jTwiddle = 0;
+            for (std::size_t j = jFirst; j <= jLast; j++) {
+                auto W = w[jTwiddle];
+                auto temp = x[j];
+                x[j] = temp + x[j + halfSize];
+                x[j + halfSize] = W * (temp - x[j + halfSize]);
+                jTwiddle += numOfProblem;
+            }
+        }
+        numOfProblem *= 2;
+        problemSize = halfSize;
+    }
+    bit_reverse_reorder(x, x_size);
+}
+
+
+void bit_reverse_reorder(std::vector<Complex> &W) {
     constexpr std::array<std::size_t, N> scrambled = bit_reverse_array<N>();
-    for (std::size_t i = 0; i < problemSize; i++) {
+    for (std::size_t i = 0; i < W.size(); i++) {
         std::size_t j = scrambled[i];
         if (i < j) {
-            swap(x[i], x[j]);
+            swap(W[i], W[j]);
         }
     }
 }
 
-void ite_dif_fft_array(Complex *x, size_t x_size) {
-    std::size_t problemSize = x_size;
-    std::size_t stages = std::log2(problemSize);
-    auto tf = twiddle_factors<N>();
-
-    for (std::size_t stage = 0; stage <= stages; stage++) {
-        std::size_t currentSize = 1 << stage;
-        std::size_t step = stages - stage;
-        std::size_t halfSize = currentSize / 2;
-        for (std::size_t k = 0; k < problemSize; k = k + currentSize) {
-            for (std::size_t j = 0; j < halfSize; j++) {
-                auto u = x[k + j];
-                auto v = x[k + j + halfSize];
-                x[k + j] = (u + v);
-                x[k + j + halfSize] = (u - v) * tf[j * (1 << step)];
-            }
-        }
-    }
-
+void bit_reverse_reorder(Complex *W, std::size_t len) {
     constexpr std::array<std::size_t, N> scrambled = bit_reverse_array<N>();
-    for (std::size_t i = 0; i < problemSize; i++) {
+    for (std::size_t i = 0; i < len; i++) {
         std::size_t j = scrambled[i];
         if (i < j) {
-            swap(x[i], x[j]);
+            swap(W[i], W[j]);
         }
     }
 }

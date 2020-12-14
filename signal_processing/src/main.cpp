@@ -6,16 +6,16 @@
 #include "signal_utils.h"
 #include "dft/dft.h"
 #include "fft/fft.h"
-#include "read_audio.h"
+#include "AuAudioFile.h"
 
-void test_dft() {
+/*void test_dft() {
     /*double f= 889.0;
     auto time = makeTimeVector(Fs, N);
     auto dft_sinus = makeSinusVector<double>(time, f);
     auto X = dft(dft_sinus);
     std::cout << "DTF ----- " ;
     auto data = generate_random_vector<Complex, double>(-0.5, 0.5, N);
-    wall_time_average_profile(100, dft<Complex>, data);*/
+    wall_time_average_profile(100, dft<Complex>, data);*//*
     double f = 889.0;
     double Fs = 22050.;
     auto time = makeTimeVector(Fs, N);
@@ -40,7 +40,7 @@ void test_dft() {
     wall_time_average_profile(100, naive_dft<Complex>, data);
     std::cout << "LUT DTF ----- ";
     wall_time_average_profile(100, lut_dft<N, Complex>, data, lut);
-}
+}*/
 
 template<typename T>
 void periodogram(const std::string &title, const std::vector<T> &x, double Fs) {
@@ -78,7 +78,7 @@ void test_fft() {
     v_rect_dif_fft(sin_vector_dif_fft_recur);
     v_rect_dif_fft_array(sin_vector_dif_fft_recur_arr.data(), sin_vector_dif_fft_recur_arr.size());
     ite_dif_fft(sin_vector_dif_fft_iter);
-    ite_dit_fft_array(sin_vector_dif_fft_iter_arr.data(), sin_vector_dif_fft_iter_arr.size());
+    ite_dif_fft_array(sin_vector_dif_fft_iter_arr.data(), sin_vector_dif_fft_iter_arr.size());
 
     std::cout << " ----- FFT COMPUTING | SINUS: f=889Hz sampled at 22050Hz -----" << std::endl;
 
@@ -115,14 +115,14 @@ void test_fft() {
     wall_time_average_profile(100, v_rect_dif_fft_array, data.data(), data.size());
     std::cout << "DIF ITER  FFT VEC ----- ";
     wall_time_average_profile(100, ite_dif_fft, data);
-    std::cout << "DIF ITER  FFT ARR ----- ";
+    std::cout << "DIF ITER  FFT ARR -----";
     wall_time_average_profile(100, ite_dif_fft_array, data.data(), data.size());
 
     epsilon_vector_compare("DIF ITER Vector, Array", sin_vector_dif_fft_iter, sin_vector_dif_fft_iter_arr);
 }
 
 void audio_test() {
-    auto disco = readAuFile("../../assets/disco.00050.au");
+    auto disco = AuAudioFile("../../assets/disco.00050.au", true);
 }
 
 
@@ -131,8 +131,9 @@ int main() {
               << SIGNAL_PROCESSING_VERSION_MINOR << std::endl;
     /*std::cout << "Testing DFT!" << std::endl;
     test_dft();*/
-    //std::cout << "Testing FFT!" << std::endl;
-    //test_fft();
+    std::cout << "Testing FFT!" << std::endl;
+    test_fft();
+    std::cout << "Testing AUDIO!" << std::endl;
     audio_test();
     return 0;
 }

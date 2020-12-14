@@ -27,5 +27,9 @@ void ite_dif_fft(std::vector<Complex> &x);
 
 void ite_dif_fft_array(Complex *x, size_t x_size);
 
+void bit_reverse_reorder(std::vector<Complex> &W);
+
+void bit_reverse_reorder(Complex *W, std::size_t len);
+
 
 #endif //SIGNAL_PROCESSING_FFT_H
