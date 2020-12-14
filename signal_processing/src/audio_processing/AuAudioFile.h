@@ -1,26 +1,19 @@
 //
-// Created by salyd on 11/12/2020.
+// Created by salyd on 14/12/2020.
 //
 
 #ifndef SIGNAL_PROCESSING_AUAUDIOFILE_H
 #define SIGNAL_PROCESSING_AUAUDIOFILE_H
 
-#define KIB 1024
-#define MIB 1048576
-#define GIB 1073741824
 
 #include <string>
-#include <array>
 #include <vector>
-
+#include "common.h"
 
 class AuAudioFile {
+
 public:
-    explicit AuAudioFile(std::string fileName, bool verbose = true);
-
-    AuAudioFile(AuAudioFile &&) noexcept; // move constructor
-
-    AuAudioFile(const AuAudioFile &) = default; // copy constructor
+    explicit AuAudioFile(std::string fileName, std::string style, bool verbose = true);
 
     ~AuAudioFile() = default;
 
@@ -44,10 +37,21 @@ public:
 
     friend std::ostream &operator<<(std::ostream &s, const AuAudioFile *h);
 
+    const std::vector<std::vector<Complex>> &getBins() const;
+
+    const std::vector<double> &getBinsAverage() const;
+
+    const std::vector<double> &getBinsStandardDeviation() const;
+
+    const std::string &getStyle() const;
+
 private:
     bool verbose, big_endianness;
-    std::vector<std::array<float, 512>> bins;
     std::vector<float> data;
+    std::vector<std::vector<Complex>> bins;
+    std::vector<double> bins_average;
+    std::vector<double> bins_standard_deviation;
+    std::string style;
     uint64_t magic_number;
     uint64_t data_offset;
     uint64_t data_size;
@@ -60,6 +64,10 @@ private:
     static uint64_t read_word(std::ifstream &file, std::size_t byte_to_read = 4, bool bigEndian = true);
 
     void read_data(std::ifstream &file, bool bigEndian = true);
+
+    void process_signal();
+
+    static std::tuple<double, double> compute_avg_stddev(const std::vector<Complex> &x);
 
 
 };

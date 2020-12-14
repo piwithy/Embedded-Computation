@@ -117,8 +117,8 @@ std::tuple<bool, int, double> epsilon_vector_compare(const std::string &title, s
     std::cout << std::boolalpha << title
               << " are same ? --> " << same
               << "\t distinct = " << count
-              << "\t accuracy = " << std::round((((double) (x.size() - count) / x.size()) * 100000) / 1000) <<"%"
-            << "\t max delta = " << max_delta << std::endl;
+              << "\t accuracy = " << std::round((((double) (x.size() - count) / x.size()) * 100000) / 1000) << "%"
+              << "\t max delta = " << max_delta << std::endl;
     return std::make_tuple(same, count, max_delta);
 }
 
@@ -141,3 +141,45 @@ void peakDetection(const std::string &title, double Fs, std::vector<Complex> &si
 }
 
 
+constexpr std::array<double, N> cosine_window(double a0) {
+    std::array<double, N> cosine{};
+    int N_item = cosine.size();
+    std::generate(cosine.begin(),
+                  cosine.end(),
+                  [N_item, a0, n = 0]() mutable {
+                      double Re;
+                      Re = a0 * (1 - std::cos((2 * std::numbers::pi * n++) / N_item));
+                      return Re;
+                  });
+    return cosine;
+}
+
+constexpr std::array<double, N> hann_window() {
+    return cosine_window(0.5);
+}
+
+constexpr std::array<double, N> hamming_window() {
+    std::array<double, N> w{};
+    std::generate(w.begin(), w.end(),
+                  [&, index = -1]()mutable {
+                      index++;
+                      return (0.54 - 2 * 0.23 * std::cos(2 * std::numbers::pi * index / N));
+                  });
+    return w;
+    //return cosine_window(25. / 64.);
+}
+
+constexpr std::array<double, N> blackman_window() {
+    double alpha = 0.16, a0 = (1 - alpha) / 2, a1 = 0.5, a2 = alpha / 2;
+    std::array<double, N> blackman{};
+    int N_item = blackman.size();
+    std::generate(blackman.begin(),
+                  blackman.end(),
+                  [a0, a1, a2, N_item, n = 0]() {
+                      double Re;
+                      Re = a0 - a1 * std::cos((2 * std::numbers::pi * n) / N_item) +
+                           a2 * std::cos((4 * std::numbers::pi * n) / N_item);
+                      return Re;
+                  });
+    return blackman;
+}

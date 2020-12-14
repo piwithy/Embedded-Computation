@@ -15,6 +15,16 @@
 #include <array>
 
 
+constexpr std::array<double, N> rect_window();
+
+constexpr std::array<double, N> cosine_window(double a0);
+
+constexpr std::array<double, N> hann_window();
+
+constexpr std::array<double, N> hamming_window();
+
+constexpr std::array<double, N> blackman_window();
+
 template<typename T>
 std::ostream &operator<<(std::ostream &s, const std::vector<T> &v);
 

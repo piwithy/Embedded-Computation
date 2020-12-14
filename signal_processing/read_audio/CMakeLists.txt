@@ -1,1 +1,0 @@
-add_library(read_audio BadEncodingException.h AuAudioFile.cpp)

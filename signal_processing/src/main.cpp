@@ -2,20 +2,23 @@
 // Created by jezegoup on 23/11/2020.
 //
 #include <iostream>
+#include <fstream>
 #include "src/SignalProcessingConfig.h"
 #include "signal_utils.h"
 #include "dft/dft.h"
 #include "fft/fft.h"
-#include "AuAudioFile.h"
+#include "audio_processing/AuAudioFile.h"
+#include "stft/stft.h"
 
 /*void test_dft() {
-    /*double f= 889.0;
+    double f= 889.0;
+    double Fs = 22050;
     auto time = makeTimeVector(Fs, N);
     auto dft_sinus = makeSinusVector<double>(time, f);
     auto X = dft(dft_sinus);
     std::cout << "DTF ----- " ;
     auto data = generate_random_vector<Complex, double>(-0.5, 0.5, N);
-    wall_time_average_profile(100, dft<Complex>, data);*//*
+    wall_time_average_profile(100, dft<Complex>, data);
     double f = 889.0;
     double Fs = 22050.;
     auto time = makeTimeVector(Fs, N);
@@ -41,6 +44,24 @@
     std::cout << "LUT DTF ----- ";
     wall_time_average_profile(100, lut_dft<N, Complex>, data, lut);
 }*/
+
+void export_learning_data(const std::string &fileName, const std::vector<AuAudioFile> &files) {
+    std::ofstream outFile(fileName);
+    for (const auto &audioFile : files) {
+        const std::vector<double> &avg = audioFile.getBinsAverage();
+        const std::vector<double> &stddev = audioFile.getBinsStandardDeviation();
+        if (!avg.empty()) {
+            std::copy(avg.cbegin(), avg.cend() - 1, std::ostream_iterator<double>(outFile, ","));
+            outFile << avg.back() << ",";
+        }
+        if (!stddev.empty()) {
+            std::copy(stddev.cbegin(), stddev.cend() - 1, std::ostream_iterator<double>(outFile, ","));
+            outFile << stddev.back() << ",";
+        }
+        outFile << "\"" << audioFile.getStyle() << "\"\n";
+    }
+    outFile.close();
+}
 
 template<typename T>
 void periodogram(const std::string &title, const std::vector<T> &x, double Fs) {
@@ -122,7 +143,21 @@ void test_fft() {
 }
 
 void audio_test() {
-    auto disco = AuAudioFile("../../assets/disco.00050.au", true);
+    std::vector<AuAudioFile> discos;
+    std::vector<typename std::chrono::microseconds::rep> samples(100);
+    for (auto &sample : samples) {
+        const auto beg = std::chrono::high_resolution_clock::now();
+        AuAudioFile disco("../../assets/disco.00050.au", "disco", false);
+        const auto end = std::chrono::high_resolution_clock::now();
+        discos.push_back(disco);
+        sample = std::chrono::duration_cast<Duration>(end - beg).count();
+    }
+    auto[mean, stddev] = average_stddev(samples);
+    std::cout << 100 << " runs: average = " << (double) mean / 1000 << " ms, stdev = " << (double) stddev / 1000
+              << " ms."
+              << std::endl;
+    export_learning_data("../../learning.csv", discos);
+    //auto disco = AuAudioFile("../../assets/disco.00050.au", true);
 }
 
 

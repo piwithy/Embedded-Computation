@@ -11,11 +11,7 @@ add_subdirectory(signal_utils)
 list(APPEND EXTRA_LIBS signal_utils)
 List(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/signal_utils")
 
-add_subdirectory(read_audio)
-list(APPEND EXTRA_LIBS read_audio)
-List(APPEND EXTRA_INCLUDES "${PROJECT_SOURCE_DIR}/read_audio")
-
-add_executable(SignalProcessing src/main.cpp )
+add_executable(SignalProcessing src/main.cpp src/audio_processing/AuAudioFile.cpp)
 
 target_link_libraries(SignalProcessing PUBLIC ${EXTRA_LIBS})
 

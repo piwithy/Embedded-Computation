@@ -12,6 +12,9 @@
 
 typedef std::complex<double> Complex;
 constexpr size_t N = 512;
+constexpr size_t KiB = 1024;
+constexpr size_t MiB = 1024 * KiB;
+constexpr size_t GiB = 1024 * MiB;
 typedef std::chrono::microseconds Duration;
 
 template<std::size_t DIM>

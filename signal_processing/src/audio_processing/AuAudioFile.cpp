@@ -1,16 +1,20 @@
 //
-// Created by salyd on 11/12/2020.
+// Created by salyd on 14/12/2020.
 //
-
 #include "AuAudioFile.h"
-#include "BadEncodingException.h"
-
-#include <fstream>
+#include "common.h"
+#include "stft/stft.h"
+#include <tuple>
 #include <iostream>
-#include <sstream>
+#include <fstream>
+#include <signal_utils.h>
+#include <fft/fft.h>
+#include <execution>
 
-AuAudioFile::AuAudioFile(std::string fileName, bool verbose) : fileName(std::move(fileName)), verbose(verbose),
-                                                               big_endianness(false) {
+AuAudioFile::AuAudioFile(std::string fileName, std::string style, bool verbose) : fileName(std::move(fileName)),
+                                                                                  verbose(verbose),
+                                                                                  big_endianness(false),
+                                                                                  style(std::move(style)) {
     std::ifstream audioFile(this->fileName);
     this->magic_number = read_word(audioFile, 4, big_endianness);
     if (magic_number != 0x2e736e64) {
@@ -29,26 +33,10 @@ AuAudioFile::AuAudioFile(std::string fileName, bool verbose) : fileName(std::mov
     if (this->verbose)
         std::cout << this << std::endl;
     read_data(audioFile);
-
+    process_signal();
+    if (audioFile.is_open())
+        audioFile.close();
 }
-
-AuAudioFile::AuAudioFile(AuAudioFile &&old) noexcept: fileName(std::move(old.fileName)), verbose(old.verbose),
-                                                      big_endianness(old.big_endianness),
-                                                      magic_number(old.magic_number), data_offset(old.data_offset),
-                                                      data_size(old.data_offset), encoding(old.encoding),
-                                                      sample_rate(old.sample_rate), channels(old.channels),
-                                                      data(std::move(old.data)) {
-
-    old.verbose = false;
-    old.big_endianness = false;
-    old.magic_number = 0;
-    old.data_offset = 0;
-    old.data_offset = 0;
-    old.encoding = 0;
-    old.sample_rate = 0;
-    old.channels = 0;
-}
-
 
 const std::vector<float> &AuAudioFile::getData() const {
     return data;
@@ -105,17 +93,17 @@ std::ostream &operator<<(std::ostream &s, const AuAudioFile &h) {
     };
     float data_size_conv;
     std::string size_unit;
-    if (h.data_size < KIB) {
+    if (h.data_size < KiB) {
         data_size_conv = h.data_size;
         size_unit = "B";
-    } else if (h.data_size < MIB) {
-        data_size_conv = (float) h.data_size / KIB;
+    } else if (h.data_size < MiB) {
+        data_size_conv = (float) h.data_size / KiB;
         size_unit = "KiB";
-    } else if (h.data_size < GIB) {
-        data_size_conv = (float) h.data_size / MIB;
+    } else if (h.data_size < GiB) {
+        data_size_conv = (float) h.data_size / MiB;
         size_unit = "MiB";
     } else {
-        data_size_conv = (float) h.data_size / GIB;
+        data_size_conv = (float) h.data_size / GiB;
         size_unit = "GiB";
     }
     return s << "\"" << h.fileName << "\" Header:\n"
@@ -139,17 +127,17 @@ std::ostream &operator<<(std::ostream &s, const AuAudioFile *h) {
     };
     float data_size_conv;
     std::string size_unit;
-    if (h->data_size < KIB) {
+    if (h->data_size < KiB) {
         data_size_conv = h->data_size;
         size_unit = " B";
-    } else if (h->data_size < MIB) {
-        data_size_conv = (float) h->data_size / KIB;
+    } else if (h->data_size < MiB) {
+        data_size_conv = (float) h->data_size / KiB;
         size_unit = " KiB";
-    } else if (h->data_size < GIB) {
-        data_size_conv = (float) h->data_size / MIB;
+    } else if (h->data_size < GiB) {
+        data_size_conv = (float) h->data_size / MiB;
         size_unit = " MiB";
     } else {
-        data_size_conv = (float) h->data_size / GIB;
+        data_size_conv = (float) h->data_size / GiB;
         size_unit = " GiB";
     }
     return s << "\"" << h->fileName << "\" Header:\n"
@@ -164,37 +152,91 @@ std::ostream &operator<<(std::ostream &s, const AuAudioFile *h) {
 }
 
 void AuAudioFile::read_data(std::ifstream &file, bool bigEndian) {
-    std::size_t word_size;
+    std::size_t word_size = 0;
     if (this->verbose)
         std::cout << "Started Reading !" << std::endl;
-    switch (encoding) {
-        case 2:
-            word_size = 1;
-            break;
-        case 3:
-            word_size = 2;
-            break;
-        case 4:
-            word_size = 3;
-            break;
-        case 5:
-            word_size = 4;
-            break;
-        default:
-            std::ostringstream stringStream;
-            stringStream << "Unsupported Encoding: " << this->encoding;
-            throw BadEncodingException(stringStream.str());
-    }
+    if (encoding == 3)
+        word_size = 2;
     file.seekg(data_offset, std::ios_base::beg);
     for (size_t data_idx = 0; data_idx < data_size / word_size; data_idx++) {
         data.push_back((float) ((short) read_word(file, word_size, bigEndian)));
     }
     data.shrink_to_fit();
-    if (this->verbose)
+    if (this->verbose) {
         std::cout << "Finished Reading !" << std::endl;
+        /*std::cout << data[0] << " " << data[100] << " " << data.back() << std::endl;
+        std::cout << data.size() << std::endl;*/
+    }
 }
 
+const std::vector<std::vector<Complex>> &AuAudioFile::getBins() const {
+    return bins;
+}
 
+const std::vector<double> &AuAudioFile::getBinsAverage() const {
+    return bins_average;
+}
 
+const std::vector<double> &AuAudioFile::getBinsStandardDeviation() const {
+    return bins_standard_deviation;
+}
 
+void AuAudioFile::process_signal() {
+    if (this->verbose)
+        std::cout << "Started Signal Processing !" << std::endl;
+    std::vector<double> average;
+    std::vector<double> std_dev;
+    std::size_t nBins = (data.size() / N);
+    auto window = hamming_window();
+    for (std::size_t bin_idx = 0; bin_idx < nBins; bin_idx++) {
+
+        std::vector<Complex> even_bin(N), odd_bin(N);
+        auto even_start = data.cbegin() + bin_idx * N;
+        auto odd_start = data.cbegin() + (bin_idx * N) + (N / 2);
+        std::copy(even_start, even_start + N, even_bin.begin());
+        std::copy(odd_start, odd_start + N, odd_bin.begin());
+
+        windowing(window, even_bin);
+        windowing(window, odd_bin);
+        ite_dit_fft(even_bin);
+        ite_dit_fft(odd_bin);
+
+        std::tuple<double, double> bin_avg_stddev_even = compute_avg_stddev(even_bin);
+        std::tuple<double, double> bin_avg_stddev_odd = compute_avg_stddev(odd_bin);
+
+        average.push_back(std::get<0>(bin_avg_stddev_even));
+        std_dev.push_back(std::get<1>(bin_avg_stddev_even));
+
+        bins_average.push_back(std::get<0>(bin_avg_stddev_odd));
+        bins_standard_deviation.push_back(std::get<1>(bin_avg_stddev_odd));
+
+        bins.push_back(even_bin);
+        bins.push_back(odd_bin);
+    }
+
+    bins.shrink_to_fit();
+    bins_average.shrink_to_fit();
+    bins_standard_deviation.shrink_to_fit();
+    if (this->verbose)
+        std::cout << "Finished Signal Processing !" << std::endl;
+}
+
+std::tuple<double, double> AuAudioFile::compute_avg_stddev(const std::vector<Complex> &x) {
+    double avg = std::reduce(std::execution::par, x.cbegin(), x.cend()).real() / x.size();
+    double stddev = std::sqrt(std::transform_reduce(
+            std::execution::par,
+            x.cbegin(),
+            x.cend(),
+            0.,
+            std::plus(),
+            [avg](Complex c) {
+                double c_r = c.real();
+                return ((c_r - avg) * (c_r - avg));
+            }) / (double) (x.size() - 1));
+    return std::make_tuple(avg, stddev);
+}
+
+const std::string &AuAudioFile::getStyle() const {
+    return style;
+}
 
